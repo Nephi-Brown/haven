@@ -49,9 +49,11 @@ export async function signupAction(
     return { fieldErrors };
   }
 
-  try {
-    await connectDB();
+  await connectDB();
 
+  let redirectTo = "/login?registered=true";
+
+  try {
     const existingBuyer = await Buyer.findOne({ email }).lean();
     const existingSeller = await Seller.findOne({ email }).lean();
 
@@ -62,13 +64,15 @@ export async function signupAction(
     const hashedPassword = await bcrypt.hash(password, 12);
 
     if (role === "seller") {
-      await Seller.create({
+      const seller = await Seller.create({
         name,
         email,
         password: hashedPassword,
         role: "seller",
         authenticated: "N",
       });
+
+      redirectTo = `/signup/seller-profile?sellerId=${seller._id.toString()}`;
     } else {
       await Buyer.create({
         name,
@@ -82,5 +86,5 @@ export async function signupAction(
     return { error: "Something went wrong. Please try again." };
   }
 
-  redirect("/login?registered=true");
+  redirect(redirectTo);
 }
